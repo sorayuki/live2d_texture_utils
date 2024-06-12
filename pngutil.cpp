@@ -74,6 +74,22 @@ bool save_png(std::filesystem::path out_path, const image_data& data) {
     return out_file.good();
 }
 
+#if HAVE_BOOST
+#include <boost/gil/image_processing/scaling.hpp>
+image_data image_resize(const image_data& in_image, int dst_w, int dst_h) {
+    auto to_view = [](const image_data& img) {
+        return boost::gil::interleaved_view(
+            img.width, img.height, 
+            (boost::gil::rgba8_pixel_t*)img.image.get(),
+            img.width * img.channels);
+    };
+
+    image_data dst;
+    dst.init(dst_w, dst_h, 4);
+    boost::gil::scale_lanczos(to_view(in_image), to_view(dst), 3);
+    return dst;
+}
+#else
 image_data image_resize(const image_data& in_image, int dst_w, int dst_h) {
     image_data dst;
     dst.init(dst_w, dst_h, 4);
@@ -83,6 +99,7 @@ image_data image_resize(const image_data& in_image, int dst_w, int dst_h) {
     );
     return dst;
 }
+#endif
 
 int png_extract(int argc, wchar_t* argv[]) {
     std::filesystem::path in_path{argv[1]};
@@ -147,9 +164,18 @@ int png_resize(int argc, wchar_t* argv[]) {
         return 1;
     }
 
-    auto out_data = image_resize(*in_data, dst_w, dst_h);
+    while(in_data->width > dst_w && in_data->height > dst_h) {
+        auto cur_dst_w = in_data->width / 2;
+        auto cur_dst_h = in_data->height / 2;
+        if (cur_dst_w < dst_w)
+            cur_dst_w = dst_w;
+        if (cur_dst_h < dst_h)
+            cur_dst_h = dst_h;
+        std::cerr << "resizing to " << cur_dst_w << "x" << cur_dst_h << std::endl;
+        in_data = image_resize(*in_data, cur_dst_w, cur_dst_h);
+    }
 
-    save_png(out_path, out_data);
+    save_png(out_path, *in_data);
     return 0;
 }
 

@@ -9,7 +9,7 @@
 #include "stb_image_write.h"
 #include "stb_image_resize2.h"
 
-struct util {
+struct png_common {
     std::vector<unsigned char> loadfile(std::filesystem::path path) {
         std::fstream fs(path, std::ios::in | std::ios::binary);
         if (!fs)
@@ -23,7 +23,7 @@ struct util {
     }
 
     bool savefile(std::filesystem::path path, const std::vector<unsigned char>& data) {
-        std::fstream fs(path, std::ios::in | std::ios::binary);
+        std::fstream fs(path, std::ios::out | std::ios::binary);
         if (!fs)
             return {};
         fs.write((const char*)data.data(), data.size());
@@ -45,7 +45,7 @@ struct util {
             this->image = image_buffer((unsigned char*)malloc(width * height * channels), free);
         }
 
-        image_data clone() {
+        image_data clone() const {
             image_data ret = *this;
             auto image_size = width * height * channels;
             ret.image = image_buffer((unsigned char*)malloc(image_size), free);
@@ -74,12 +74,13 @@ struct util {
             auto& v = *static_cast<std::vector<unsigned char>*>(ctx);
             v.insert(v.end(), (unsigned char*)data, (unsigned char*)data + size);
         };
+        stbi_write_png_to_func(writefunc, &buffer, data.width, data.height, data.channels, data.image.get(), data.width * data.channels);
         return buffer;
     }
 
     image_data image_resize(const image_data& in_image, int dst_w, int dst_h) {
         if (in_image.width == dst_w && in_image.height == dst_h)
-            return in_image;
+            return in_image.clone();
         image_data dst;
         dst.init(dst_w, dst_h, 4);
         stbir_resize(in_image.image.get(), in_image.width, in_image.height, in_image.width * in_image.channels,

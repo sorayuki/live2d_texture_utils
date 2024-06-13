@@ -1,10 +1,8 @@
-#include "utils.h"
-
-#include <windows.h>
+#include "png_common.h"
 
 typedef void (__cdecl *on_finish_callback)(int code, const void* data, size_t size);
 
-class PngResize: public util {
+class PngResize: public png_common {
 public:
     void Run(const unsigned char* in_data, size_t in_size, int width, int height, on_finish_callback callback) {
         std::vector<unsigned char> in_buf(in_data, in_data + in_size);

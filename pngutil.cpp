@@ -1,4 +1,4 @@
-#include "utils.h"
+#include "png_common.h"
 
 #include <stdint.h>
 #include <iostream>
@@ -8,7 +8,7 @@
 #include <string>
 #include <charconv>
 
-class png_extract: public util {
+class png_extract: public png_common {
 public:
     int run(int argc, wchar_t* argv[]) {
         std::filesystem::path in_path{argv[1]};
@@ -53,7 +53,7 @@ public:
 };
 
 
-class png_resize: public util {
+class png_resize: public png_common {
 public:
     int run(int argc, wchar_t* argv[]) {
         std::filesystem::path in_path{argv[1]};
@@ -77,8 +77,10 @@ public:
         }
 
         while(in_data->width > dst_w && in_data->height > dst_h) {
-            auto cur_dst_w = in_data->width / 2;
-            auto cur_dst_h = in_data->height / 2;
+            // auto cur_dst_w = in_data->width / 2;
+            // auto cur_dst_h = in_data->height / 2;
+            auto cur_dst_w = 0;
+            auto cur_dst_h = 0;
             if (cur_dst_w < dst_w)
                 cur_dst_w = dst_w;
             if (cur_dst_h < dst_h)
